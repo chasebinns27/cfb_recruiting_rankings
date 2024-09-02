@@ -1,0 +1,12 @@
+name: CFB_Recruiting_Power
+title: CFB_Recruiting_Power
+username: cbinnsanalytics
+account: cbinnsanalytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12346188
+bundleId: 8889719
+url: https://cbinnsanalytics.shinyapps.io/CFB_Recruiting_Power/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE

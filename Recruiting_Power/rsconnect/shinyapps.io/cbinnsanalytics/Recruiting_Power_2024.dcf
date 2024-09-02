@@ -1,0 +1,12 @@
+name: Recruiting_Power_2024
+title: Recruiting_Power_2024
+username: cbinnsanalytics
+account: cbinnsanalytics
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 9987938
+bundleId: 7726851
+url: https://cbinnsanalytics.shinyapps.io/Recruiting_Power_2024/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
