@@ -177,7 +177,9 @@ rep.res <- sapply(seq(1,32), function(x) {dim(Actives[[x]])[[1]]})
 nfl_player_names <- bind_rows(
   lapply(names(Actives), function(sublist_name) {
     Actives[[sublist_name]] %>%
-      mutate(across(contains("Free Agent"), as.character)) %>%
+      janitor::clean_names() %>%
+      select(-contains('free_agent')) %>%
+      #mutate(across(contains("Free Agent"), as.character)) %>%
       mutate(Sublist = sublist_name)
   })
 ) %>%
@@ -185,7 +187,7 @@ nfl_player_names <- bind_rows(
   #ifelse(is.na(Active.Players..89.) == FALSE, Active.Players..89.,
   #ifelse(is.na(Active.Players..90.) == FALSE, Active.Players..90.,
   #ifelse(is.na(Active.Players..91.) == FALSE, Active.Players..91., Active.Players..92.))))) %>%
-  select(matches('Player')) %>%
+  select(matches('player')) %>%
   rowwise() %>%
   transmute(player_name = paste(na.omit(c_across()), collapse = ", ")) %>%
   mutate(player_name = gsub("^[^[:space:]]+\\s+", "", player_name))
@@ -207,7 +209,9 @@ nfl_player_names$player_name <- sapply(nfl_player_names$player_name, remove_lead
 nfl_player_data <- bind_rows(
   lapply(names(Actives), function(sublist_name) {
     Actives[[sublist_name]] %>%
-      mutate(across(contains("Free Agent"), as.character)) %>%
+      janitor::clean_names() %>%
+      select(-contains('free_agent')) %>%
+      #mutate(across(contains("Free Agent"), as.character)) %>%
       mutate(Sublist = sublist_name)
   })
 ) %>%
