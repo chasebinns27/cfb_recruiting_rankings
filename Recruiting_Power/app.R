@@ -13,6 +13,7 @@ library(stringr)
 library(purrr)
 library(gtExtras)
 library(gt)
+library(rsconnect)
 
 #Add global data
 
@@ -304,8 +305,10 @@ rm(list = objects_to_remove)
 # Define UI for application that draws a histogram
 ui <- fluidPage(
   #adjust css styles
-  tags$link(rel = "stylesheet", href = "https://fonts.googleapis.com/css2?family=Teachers"),
-  tags$style(HTML("body { font-family: 'Teachers', sans-serif; color: navy blue; }")),
+  tags$head(
+    tags$link(href = "https://fonts.googleapis.com/css2?family=News+Cycle:wght@400;700&display=swap", rel = "stylesheet")
+  ),
+  theme = bslib::bs_theme(bootswatch = 'journal', primary = "#007bff"),
   
   #convert to Vertical Layout
   sidebarLayout(
@@ -315,14 +318,19 @@ ui <- fluidPage(
       actionButton("goButton","View")
     ),
     mainPanel(
-      verticalLayout(  
-        titlePanel('Team Rankings'),
-        gt_output("power_rankings"),
-                         titlePanel("Power Remaining"),
-                         gt_output("power_remaining"),
-                         br(),
-                         titlePanel("Players"),
-                         gt_output("players")))
+      tabsetPanel(
+        tabPanel("Team Rankings",
+                 br(),
+                   fluidRow(
+                   column(8,
+                          gt_output("power_rankings")),
+                   column(4,
+                          gt_output("power_remaining")))
+                   ),
+        tabPanel("Player Rankings",
+                 verticalLayout(br(),
+                                 gt_output("players")))
+                        ))
     
 
   ))
@@ -333,6 +341,26 @@ server <- function(input, output) {
   final_recruiting_data <- eventReactive(input$goButton, {
     recruiting_data_pull(year = input$ry)})
   
+  max_class_total <- eventReactive(input$goButton, {
+    final_recruiting_data() %>%
+      left_join(position_pct, by = "position") %>%
+      mutate(value = mean_cap_pct * as.numeric(score)) %>%
+      filter(is.na(committed_school) == FALSE) %>%
+      group_by(committed_school) %>%
+      summarise(class_total = sum(value)) %>%
+      ungroup() %>%
+      summarize(max_total = max(class_total), na.rm = TRUE) %>%
+      pull(max_total)
+  })
+  
+  max_player_value <- eventReactive(input$goButton, {
+    final_recruiting_data() %>%
+      left_join(position_pct, by = "position") %>%
+      mutate(value = mean_cap_pct * as.numeric(score)) %>%
+      summarize(max_value = max(value), na.rm = TRUE) %>%
+      pull(max_value)
+  })
+  
   output$power_rankings <- render_gt({
       return(final_recruiting_data() %>%
                left_join(position_pct, by = "position") %>%
@@ -340,13 +368,32 @@ server <- function(input, output) {
                group_by(committed_school) %>%
                summarise(class_total = sum(value)) %>%
                arrange(desc(class_total)) %>%
-               filter(is.na(committed_school) == FALSE))
+               filter(is.na(committed_school) == FALSE) %>%
+               mutate(Rank = dplyr::row_number()) %>%
+               select(Rank, `Committed School` = committed_school, `Class Total` = class_total) %>%
+               gt() %>%
+               gt_theme_538() %>%
+               gt_color_rows(`Class Total`,
+                             palette = c("white", "green"),
+                             domain = c(0, max_class_total())) %>%
+               tab_header(title = 'Team Power Rankings'))
   })
   
   output$players <- render_gt({
     return(final_recruiting_data() %>%
              left_join(position_pct, by = "position") %>%
-             mutate(value = mean_cap_pct * as.numeric(score)))
+             mutate(value = mean_cap_pct * as.numeric(score)) %>%
+             select(Rank = rank, `Player Name` = player, `247 Grade` = score,
+                    Position = position, `Commitment Status` = commitment_status,
+                    `Committed School` = committed_school, `Leading School` = leading_school,
+                    `Crystal Ball Pct of Leading School` = crystal_ball_pct,
+                    `NFL Cap Pct of Position` = mean_cap_pct, Power = value) %>%
+             gt() %>%
+             gt_theme_538() %>%
+             gt_color_rows(Power,
+                           palette = c("white", "green"),
+                           domain = c(0, max_player_value())) %>%
+             tab_header(title = 'Player Rankings With Salary Power'))
   })
   
   output$power_remaining <- render_gt({
@@ -357,7 +404,11 @@ server <- function(input, output) {
       summarise(class_total = sum(value)) %>%
       arrange(desc(class_total)) %>%
       filter(is.na(committed_school) == TRUE) %>%
-      select(power_remaining = class_total))
+      select(`Power Remaining` = class_total) %>%
+      gt() %>%
+        gt_theme_538() %>%
+        tab_header(title = 'Power Remaining')
+      )
   })
 }
 
