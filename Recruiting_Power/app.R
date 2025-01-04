@@ -13,7 +13,6 @@ library(stringr)
 library(purrr)
 library(gtExtras)
 library(gt)
-library(rsconnect)
 
 #Add global data
 
