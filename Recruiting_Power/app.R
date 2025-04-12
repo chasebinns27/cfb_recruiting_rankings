@@ -13,6 +13,7 @@ library(stringr)
 library(purrr)
 library(gtExtras)
 library(gt)
+library(httr)
 
 #Add global data
 
@@ -147,14 +148,14 @@ recruiting_data_pull <- function(year) {
 
 #Bring in salary data
 base_url <- "https://www.spotrac.com/nfl/teams"
-read.base <- read_html(base_url)
+read.base <- read_html(GET(base_url, user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36")))
 team.URL <- read.base %>% html_nodes(".list-group a") %>% html_attr('href')
 team.URL <- team.URL[nchar(team.URL) > 0]
 
 team.names <- gsub("/overview","", gsub('https://www.spotrac.com/nfl/', '', team.URL))
 
 data.creator <- function(link) {
-  read_html(link) %>% html_nodes("table") %>% html_table(header=TRUE, fill=TRUE) -> res
+  read_html(GET(link, user_agent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"))) %>% html_nodes("table") %>% html_table(header=TRUE, fill=TRUE) -> res
   res <- list(res[[1]], res[[3]])
   names(res) <- c("Active","Inactive")
   return(res)
